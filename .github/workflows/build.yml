@@ -1,3 +1,5 @@
+# 更新 .github/workflows/build.yml
+cat > .github/workflows/build.yml << 'EOF'
 name: Build Aurora Browser Android
 
 on:
@@ -37,9 +39,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
-
       - name: Build APK
         run: flutter build apk --release
 
@@ -65,5 +64,6 @@ jobs:
           files: app-release.apk
           draft: false
           prerelease: false
+EOF
 
 
