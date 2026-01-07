@@ -1,6 +1,4 @@
-# 更新 build.yml，移除测试步骤
-cat > .github/workflows/build.yml << 'EOF'
-name: Build Aurora Browser
+name: Build Aurora Browser Android
 
 on:
   push:
@@ -39,7 +37,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 移除了测试步骤，或者可以添加一个空的测试目录
+      - name: Run tests
+        run: flutter test
+
       - name: Build APK
         run: flutter build apk --release
 
@@ -49,87 +49,21 @@ jobs:
           name: aurora-browser-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-  build-ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
-          cache: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.flutter-plugins
-            **/.flutter-plugin-dependencies
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build iOS
-        run: |
-          flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
-          zip -r aurora-browser-ios.ipa Payload
-
-      - name: Upload iOS IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: aurora-browser-ios
-          path: build/ios/iphoneos/aurora-browser-ios.ipa
-
-  build-web:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Web
-        run: flutter build web --release
-
-      - name: Upload Web Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: aurora-browser-web
-          path: build/web
-
   release:
-    needs: [build-android, build-ios, build-web]
+    needs: [build-android]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
-      - name: Download all artifacts
+      - name: Download APK
         uses: actions/download-artifact@v4
+        with:
+          name: aurora-browser-apk
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            aurora-browser-apk/app-release.apk
-            aurora-browser-ios/aurora-browser-ios.ipa
-            aurora-browser-web/**
+          files: app-release.apk
           draft: false
           prerelease: false
-EOF
+
 
